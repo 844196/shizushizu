@@ -1,0 +1,13 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "speech_text": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^ ]+"
+        }
+    },
+    "required": ["speech_text"],
+    "additionalProperties": false
+}

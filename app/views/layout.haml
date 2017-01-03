@@ -1,0 +1,65 @@
+!!!
+%html{:lang => 'ja'}
+  %head
+    %meta{:charset => 'UTF-8'}
+    %meta{:name => 'viewport', :content => 'width=device-width, initial-scale=1.0'}
+    %link{:rel => 'stylesheet', :href => '//cdn.honokak.osaka/umi/3.3.7-2/css/bootstrap.min.css'}
+    %script{:src => '//code.jquery.com/jquery-3.1.1.slim.min.js'}
+    %script{:src => '//cdn.honokak.osaka/umi/3.3.7-2/js/bootstrap.min.js'}
+    %script{:src => '//unpkg.com/vue/dist/vue.js'}
+    %script{:src => '//unpkg.com/axios/dist/axios.min.js'}
+    %script{:src => '//use.fontawesome.com/e6143a57b9.js'}
+    %script{:src => '//cdn.jsdelivr.net/clipboard.js/1.5.16/clipboard.min.js'}
+    %script{:src => '//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js'}
+  %body
+    %nav.navbar.navbar-default.navbar-static-top
+      .container-fluid
+        .navbar-header
+          %a.navbar-brand{:href => '/'}
+            Shizushizu
+          %button.navbar-toggle.collapsed{:type => 'button', :'data-toggle' => 'collapse', :'data-target' => '#collapse-toggle'}
+            %span.icon-bar
+            %span.icon-bar
+            %span.icon-bar
+        #collapse-toggle.collapse.navbar-collapse
+          %ul.nav.navbar-nav{:id => 'navbar-content'}
+            %li{:is => 'navbar-content', :'v-for' => 'content in contents', :':content' => 'content'}
+    = yield
+
+    :javascript
+      Vue.component('navbar-content', {
+        template: '<li :class="{ active:isActive(content.href) }"><a :href="content.href">{{ content.title }}</li>',
+        props: ['content'],
+        methods: {
+          isActive: function (href) {
+            return window.location.pathname === href;
+          },
+        },
+      });
+      var navbar_control = new Vue({
+        el: '#navbar-content',
+        data: {
+          contents: [
+            {title: 'Top', href: '/'},
+            {title: 'Schedules', href: '/schedules'},
+          ],
+        },
+      });
+
+    :css
+      .modal {
+        text-align: center;
+        padding: 0 !important;
+      }
+      .modal:before {
+        content: '';
+        display: inline-block;
+        height: 100%;
+        vertical-align: middle;
+        margin-right: -4px;
+      }
+      .modal-dialog {
+        display: inline-block;
+        text-align: left;
+        vertical-align: middle;
+      }

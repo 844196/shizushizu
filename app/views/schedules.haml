@@ -1,0 +1,213 @@
+#app
+  .container-fluid
+    .row
+      .col-sm-4.col-md-3.sidebar
+        %div.item{:'@click' => 'startEdit(getSkeleton())'}
+          新規作成
+        %div.item{:'v-for' => 'schedule in schedules', :'@click' => 'startEdit(schedule)'}
+          %dl
+            %dt
+              {{ schedule.at }} - {{ schedule.name }}
+            %dd
+              {{ schedule.speech_text }}
+      .col-sm-8.col-sm-offset-4.col-md-9.col-md-offset-3.main
+        .panel.panel-primary
+          .panel-heading
+            %h3.panel-title
+              スケジュール{{ currentScheduleIsNew ? '作成' : '更新' }}
+          %form.form-horizontal{:'@submit.prevent' => 'currentScheduleIsNew ? create() : update()'}
+            .panel-body
+              .form-group{:':class' => 'validations.name ? "has-success" : "has-error"'}
+                %label.col-sm-2.control-label
+                  ジョブ名
+                .col-sm-10
+                  %input.form-control{:type => 'text', :'v-model' => 'currentSchedule.name'}
+                  %label.control-label{:'v-show' => '!validations.name'}
+                    未入力です
+              .form-group{:':class' => 'validations.at ? "has-success" : "has-error"'}
+                %label.col-sm-2.control-label
+                  時刻
+                .col-sm-10
+                  %input.form-control{:type => 'text', :'v-model' => 'currentSchedule.at'}
+                  %label.control-label{:'v-show' => '!validations.at'}
+                    %code
+                      HH:mm
+                    形式で入力してください
+              .form-group{:':class' => 'validations.speech_text ? "has-success" : "has-error"'}
+                %label.col-sm-2.control-label
+                  内容
+                .col-sm-10
+                  %textarea.form-control{:'v-model' => 'currentSchedule.speech_text'}
+                  %label.control-label{:'v-show' => '!validations.speech_text'}
+                    未入力です
+            .panel-footer.text-right
+              %button.btn.btn-danger{:type => 'button', :'v-if' => '!currentScheduleIsNew', :'@click' => 'del()'}
+                %i.fa.fa-trash.fa-fw
+                削除
+              %button.btn.btn-success{:'v-show' => 'isValid'}
+                %i.fa.fa-fw{:':class' => 'currentScheduleIsNew ? "fa-plus" : "fa-refresh"'}
+                {{ currentScheduleIsNew ? '作成' : '更新' }}
+
+:javascript
+  var vm = new Vue({
+    el: '#app',
+    data: {
+      schedules: [],
+      currentSchedule: {id: -1, name: '', at: '', speech_text: ''},
+    },
+    computed: {
+      /**
+       * currentScheduleが新規作成かを返す
+       */
+      currentScheduleIsNew: function () {
+        return this.currentSchedule.id == -1;
+      },
+
+      /**
+       * currentScheduleが編集されたかを返す
+       */
+      currentScheduleIsChange: function () {
+      },
+
+      /**
+       * バリデーションを返す
+       */
+      validations: function () {
+        return {
+          at: !!this.currentSchedule.at.match(/[0-2][0-9]:[0-5][0-9]/),
+          name: !!this.currentSchedule.name.trim(),
+          speech_text: !!this.currentSchedule.speech_text.trim(),
+        };
+      },
+
+      /**
+       * バリデーションを満たしているかを返す
+       */
+      isValid: function () {
+        return _.every(this.validations, function (result) {
+          return result;
+        });
+      },
+    },
+    created: function () {
+      var that = this;
+      axios
+        .get('/api/v1/speech/schedules')
+        .then(function (response) {
+          that.schedules = response.data;
+        })
+        .catch(function (error) {
+          console.log(error.response.data.reason);
+        });
+    },
+    methods: {
+      /**
+       * スケルトンを返す
+       */
+      getSkeleton: function () {
+        return {id: -1, name: '', at: '', speech_text: ''};
+      },
+
+      /**
+       * IDからスケジュールを返す
+       */
+      findById: function (id) {
+        return _.find(this.schedules, function(schedule) {
+          return schedule.id == id;
+        });
+      },
+
+      /**
+       * 渡されたスケジュールの編集を開始する
+       */
+      startEdit: function (schedule) {
+        this.currentSchedule = JSON.parse(JSON.stringify(schedule));
+      },
+
+      /**
+       * スケジュールを新規作成する
+       */
+      create: function () {
+        if (!this.isValid) return;
+
+        var target = JSON.parse(JSON.stringify(this.currentSchedule));
+        delete target.id;
+        var that = this;
+        axios
+          .post('/api/v1/speech/schedules', target)
+          .then(function (response) {
+            target.id = response.data.id;
+            that.schedules.push(target);
+            that.startEdit(that.getSkeleton());
+          })
+          .catch(function (error) {
+            console.log(error.response.data.reason);
+          });
+      },
+
+      /**
+       * スケジュールを更新する
+       */
+      update: function () {
+        if (!this.isValid) return;
+
+        var target = this.findById(this.currentSchedule.id);
+        var that = this;
+        axios
+          .put('/api/v1/speech/schedules/' + target.id, that.currentSchedule)
+          .then(function () {
+            target.name = that.currentSchedule.name;
+            target.at = that.currentSchedule.at;
+            target.speech_text = that.currentSchedule.speech_text;
+          })
+          .catch(function (error) {
+            console.log(error.response.data.reason);
+          });
+      },
+
+      /**
+       * スケジュールを削除する
+       */
+      del: function () {
+        var target = this.findById(this.currentSchedule.id);
+        var that = this;
+        axios
+          .delete('/api/v1/speech/schedules/' + target.id)
+          .then(function () {
+            that.schedules.splice(that.schedules.indexOf(target), 1);
+            that.startEdit(that.getSkeleton());
+          })
+          .catch(function (error) {
+            console.log(error.response.data.reason);
+          });
+      },
+    },
+  });
+
+:css
+  .main {
+    padding: 0 20px;
+  }
+  .sidebar {
+    position: fixed;
+    top: 82px;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    display: block;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: #f5f5f5;
+    border-right: 1px solid #e3e3e3;
+  }
+  .sidebar .item {
+    padding: 20px;
+    border-bottom: 1px solid #e3e3e3;
+  }
+  .sidebar .item:hover {
+    background-color: #e3e3e3;
+  }
+  .sidebar .item dl {
+    margin-bottom: 0;
+  }

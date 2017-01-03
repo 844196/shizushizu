@@ -1,0 +1,151 @@
+.jumbotron
+  .container
+    .text-center
+      %span.fa-stack.fa-5x
+        %i.fa.fa-square.fa-stack-2x
+        %i.fa.fa-bullhorn.fa-stack-1x.fa-inverse
+      %h2
+        Shizushizu
+%section.section.section-default.text-center
+  .container
+    .subtitle
+      %h2
+        喋ります
+      %p
+        べんりです
+    .row.row-eq-height#sales-point
+      %div{:is => 'sales-point', :'v-for' => 'point in points', :':point' => 'point'}
+%section.section.section-inverse.text-center
+  .container
+    .subtitle
+      %h2
+        APIが使えます
+      %p
+        このクソみたいなサイトを使わなくても喋らせることができます
+    .row
+      .col-md-8.col-md-offset-2.col-xs-12.text-center
+        .form-group
+          .input-group.input-group-lg
+            %input.form-control#api-sample{':value' => '"curl -X POST -d \'{\"content\":\"○○さん、どうして私を捨てたの...?\"}\' " + hostname + "/api/v1/speech"', :readonly => true}
+            %span.input-group-btn
+              %button.btn.btn-default#copy-button{:'data-clipboard-target' => '#api-sample'}
+                %i.fa.fa-clipboard
+%section.section.section-default.text-center
+  .container
+    .subtitle
+      %h2
+        さぁ、はじめましょう
+      %p
+        喋ります
+    .row
+      .col-md-8.col-md-offset-2.col-xs-12.text-center
+        .form-group
+          %form#speech{:'@submit.prevent' => 'speech'}
+            .input-group.input-group-lg
+              %input.form-control{:'v-model' => 'speech_text'}
+              %span.input-group-btn
+                %button.btn.btn-primary{:':disabled' => '!isValid'}
+                  喋る
+
+:javascript
+  var clipboard = new Clipboard('#copy-button');
+  var api_sample = new Vue({
+    el: '#api-sample',
+    data: {
+      hostname: window.location.href.split("/")[2],
+    },
+  });
+  Vue.component('sales-point', {
+    template: '\
+      <div class="col-md-4 col-sm-6"> \
+        <span class="fa-stack fa-4x"> \
+          <i class="fa fa-circle fa-stack-2x" :style="\'color:\' + point.color"></i> \
+          <i :class="\'fa \' + point.icon + \' fa-stack-1x fa-inverse\'"></i> \
+        </span> \
+        <h4>{{ point.title }}</h4> \
+        <p>{{ point.description }}</p> \
+      </div> \
+    ',
+    props: ['point'],
+  });
+  var sales_point = new Vue({
+    el: '#sales-point',
+    data: {
+      points: [
+        {
+          icon: 'fa-bullhorn',
+          color: '#18bc9c',
+          title: '喋ります',
+          description: 'べんりです',
+        },
+        {
+          icon: 'fa-clock-o',
+          color: '#e74c3c',
+          title: '設定した時刻に喋ります',
+          description: 'たぶんうごきます',
+        },
+        {
+          icon: 'fa-keyboard-o',
+          color: '#f39c12',
+          title: 'APIがあります',
+          description: 'がんばりました',
+        },
+      ]
+    },
+  });
+  var speech = new Vue({
+    el: '#speech',
+    data: {
+      speech_text: '',
+    },
+    computed: {
+      isValid: function () {
+        return !!this.speech_text.trim();
+      },
+    },
+    methods: {
+      speech: function () {
+        if (!this.isValid) return;
+
+        var that = this;
+        axios
+          .post('/api/v1/speech', {
+            speech_text: this.speech_text,
+          })
+          .then(function () {
+            that.speech_text = '';
+          })
+          .catch(function (error) {
+            console.log(error.response.data.reason);
+          });
+      },
+    },
+  });
+
+:css
+  .jumbotron {
+    margin-bottom: 0;
+  }
+  .navbar {
+    margin-bottom: 0;
+  }
+  .row-eq-height {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .section {
+    padding: 100px 0;
+  }
+  .section-default {
+    background-color: #f9f9f9;
+  }
+  .section-inverse {
+    background-color: #fafcff;
+  }
+  .subtitle {
+    margin-bottom: 36px;
+    text-align: center;
+  }
+  .subtitle h2 {
+    margin-top: 0;
+  }
