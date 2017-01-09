@@ -21,7 +21,7 @@ class App < Sinatra::Base
 
   namespace '/api/v1' do
     helpers do
-      def contract(api_path, method, type)
+      def contract_(api_path, method, type)
         JSON.parse(File.read("#{settings.root}/contracts#{api_path.gsub(/(?<=schedules\/).+/, 'schedule')}/#{method}/#{type.to_s}.json"))
       end
     end

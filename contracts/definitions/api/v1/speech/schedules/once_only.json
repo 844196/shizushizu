@@ -1,0 +1,5 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "description": "この発話スケジュールは1回限りの実行か?",
+    "type": "boolean"
+}

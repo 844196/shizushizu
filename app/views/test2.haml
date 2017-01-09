@@ -1,0 +1,64 @@
+!!!
+%html{:lang => 'ja'}
+  %head
+    %meta{:charset => 'UTF-8'}
+    %meta{:name => 'viewport', :content => 'width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no'}
+    %link{:rel => 'stylesheet', :href => '//fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic'}
+    %link{:rel => 'stylesheet', :href => '//fonts.googleapis.com/icon?family=Material+Icons'}
+    %link{:rel => 'stylesheet', :href => '//unpkg.com/vue-material@0.5.2/dist/vue-material.css'}
+  %body
+    #app{:style => 'padding:16px'}
+      %md-list
+        %md-list-item
+          %md-icon schedule
+          .md-list-text-container
+            %md-input-container
+              %label 時刻
+              %md-input{:'v-model' => 'at'}
+        %md-list-item
+          %md-icon date_range
+          .md-list-text-container
+            %wday-selector{:'v-model' => 'wday'}
+    %script{:src => '//unpkg.com/axios/dist/axios.min.js'}
+    %script{:src => '//unpkg.com/vue/dist/vue.js'}
+    %script{:src => '//unpkg.com/vue-material@0.5.2'}
+    %script{:src => '//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js'}
+
+    %script#wday-selector-template{:type => 'text/x-template'}
+      %md-button-toggle.md-accent
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(0)}', :'@click' => 'toggle(0)', :'v-once' => 'true'} 日
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(1)}', :'@click' => 'toggle(1)', :'v-once' => 'true'} 月
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(2)}', :'@click' => 'toggle(2)', :'v-once' => 'true'} 火
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(3)}', :'@click' => 'toggle(3)', :'v-once' => 'true'} 水
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(4)}', :'@click' => 'toggle(4)', :'v-once' => 'true'} 木
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(5)}', :'@click' => 'toggle(5)', :'v-once' => 'true'} 金
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(6)}', :'@click' => 'toggle(6)', :'v-once' => 'true'} 土
+
+    :javascript
+      Vue.use(VueMaterial);
+      Vue.component('wday-selector', {
+        template: '#wday-selector-template',
+        props: {
+          value: Array,
+        },
+        methods: {
+          isExists: function (wday) {
+            return (this.value.indexOf(wday) >= 0);
+          },
+          toggle: function (wday) {
+            if (this.isExists(wday)) {
+              this.value.splice(this.value.indexOf(wday), 1);
+            } else {
+              this.value.push(wday);
+            }
+          },
+        },
+      });
+
+      var App = new Vue({
+        el: '#app',
+        data: {
+          at: '',
+          wday: [1, 2, 3, 4, 5],
+        },
+      });

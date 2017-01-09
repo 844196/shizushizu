@@ -1,0 +1,363 @@
+!!!
+%html{:lang => 'ja'}
+  %head
+    %meta{:charset => 'UTF-8'}
+    %meta{:name => 'viewport', :content => 'width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no'}
+    %link{:rel => 'stylesheet', :href => '//fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic'}
+    %link{:rel => 'stylesheet', :href => '//fonts.googleapis.com/icon?family=Material+Icons'}
+    %link{:rel => 'stylesheet', :href => '//unpkg.com/vue-material@0.5.2/dist/vue-material.css'}
+  %body
+    #app
+      %md-sidenav.main-sidebar.md-left.md-fixed{:ref => 'leftSidenav'}
+        %md-list
+          %md-list-item{:'@click' => 'startSpeech()'}
+            Speech
+          %md-list-item
+            Schedules
+            %md-list-expand{:ref => 'schedules'}
+              %md-list.md-double-line
+                %md-list-item{:'@click' => 'startEdit(getSkeleton())'}
+                  %md-icon add_circle
+                  .md-list-text-container 新規スケジュール作成
+                  %md-divider.md-insert
+                %md-list-item{:'v-for' => 'schedule in schedules', :'@click' => 'startEdit(schedule)'}
+                  %md-icon event
+                  .md-list-text-container
+                    %span.schedule-meta-info {{ schedule.at }} - {{ schedule.name }}
+                    %span.schedule-speech-text {{ schedule.speech_text }}
+      %md-toolbar
+        %md-button.md-icon-button{:'@click' => 'toggleLeftSidenav()'}
+          %md-icon menu
+        %h1.md-title {{ headerTitle }}
+      %main
+        #speech{:'v-if' => 'this.activePage == "speech"'}
+          %form{:'@submit.prevent' => 'speechNow(currentSpeech.speech_text)'}
+            %md-input-container{:'md-inline' => true}
+              %label your awesome texts...
+              %md-input{:'v-model' => 'currentSpeech.speech_text'}
+          %md-card{:'v-for' => 'speechHistory in speechHistories'}
+            %md-card-header
+              %md-avatar
+                %md-icon.md-primary speaker_notes
+              .md-title {{ speechHistory.speech_text }}
+              .md-subhead {{ speechHistory.at.toLocaleTimeString() }}
+        #schedules{:'v-if' => 'this.activePage == "schedules"'}
+          %md-card.edit-card
+            %md-card-content
+              %md-list.md-double-line
+                %md-list-item
+                  %md-icon{:':class' => '{"md-warn": !scheduleValidations.name}'} title
+                  .md-list-text-container
+                    %md-input-container{:':class' => '{"md-input-invalid": !scheduleValidations.name}'}
+                      %label ジョブ名
+                      %md-input{:'v-model' => 'currentSchedule.name'}
+                      %span.md-error{:'v-show' => '!scheduleValidations.name'} 未入力です
+                %md-list-item
+                  %md-icon{:':class' => '{"md-warn": !scheduleValidations.at}'} schedule
+                  .md-list-text-container
+                    %md-input-container{:':class' => '{"md-input-invalid": !scheduleValidations.at}'}
+                      %label 時刻
+                      %md-input{:'v-model' => 'currentSchedule.at'}
+                      %span.md-error{:'v-show' => '!scheduleValidations.at'} HH:mm 形式で入力してください
+                %md-list-item
+                  %md-icon{:':class' => '{"md-warn": !scheduleValidations.speech_text}'} speaker_notes
+                  .md-list-text-container
+                    %md-input-container{:':class' => '{"md-input-invalid": !scheduleValidations.speech_text}'}
+                      %label 発言内容
+                      %md-input{:'v-model' => 'currentSchedule.speech_text'}
+                      %span.md-error{:'v-show' => '!scheduleValidations.speech_text'} 未入力です
+                  %md-button.md-icon-button.md-list-action
+                    %md-icon volume_up
+                %md-list-item{:'@click' => 'currentSchedule.once_only = !currentSchedule.once_only'}
+                  %md-icon sync_disabled
+                  %md-checkbox{:'v-model' => 'currentSchedule.once_only'} 1回限り
+                %md-list-item
+                  %md-icon date_range
+                  %wday-selector{:'v-model' => 'currentSchedule.wday'}
+            %md-card-actions
+              %md-button.md-warn{:'v-if' => '!currentScheduleIsNew', :'@click' => 'del()'}
+                %md-icon delete_forever
+                削除
+              %md-button.md-primary{:'v-if' => 'scheduleIsValid', :'@click' => 'currentScheduleIsNew ? create() : update()'}
+                %md-icon refresh
+                更新
+
+    %script{:src => '//unpkg.com/axios/dist/axios.min.js'}
+    %script{:src => '//unpkg.com/vue/dist/vue.js'}
+    %script{:src => '//unpkg.com/vue-material@0.5.2'}
+    %script{:src => '//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js'}
+
+    %script#wday-selector-template{:type => 'text/x-template'}
+      %md-button-toggle.md-accent
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(0)}', :'@click' => 'toggle(0)', :'v-once' => 'true'} 日
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(1)}', :'@click' => 'toggle(1)', :'v-once' => 'true'} 月
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(2)}', :'@click' => 'toggle(2)', :'v-once' => 'true'} 火
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(3)}', :'@click' => 'toggle(3)', :'v-once' => 'true'} 水
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(4)}', :'@click' => 'toggle(4)', :'v-once' => 'true'} 木
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(5)}', :'@click' => 'toggle(5)', :'v-once' => 'true'} 金
+        %md-button.md-icon-button{:':class' => '{"md-toggle": this.isExists(6)}', :'@click' => 'toggle(6)', :'v-once' => 'true'} 土
+
+    :javascript
+      Vue.use(VueMaterial);
+      Vue.component('wday-selector', {
+        template: '#wday-selector-template',
+        props: {
+          value: Array,
+        },
+        methods: {
+          isExists: function (wday) {
+            return (this.value.indexOf(wday) >= 0);
+          },
+          toggle: function (wday) {
+            if (this.isExists(wday)) {
+              this.value.splice(this.value.indexOf(wday), 1);
+            } else {
+              this.value.push(wday);
+            }
+          },
+        },
+      });
+
+    :css
+      html, body {
+        height: 100%;
+      }
+      body {
+        display: flex;
+      }
+      #app {
+        min-height: 100%;
+        display: flex;
+        flex-flow: column nowrap;
+        flex: 1;
+        background-color: #f7f7f7;
+        overflow: auto;
+      }
+      .md-sidenav.main-sidebar .md-sidenav-content {
+        width: 304px;
+        display: flex;
+        flex-flow: column;
+      }
+      main {
+        padding: 16px;
+      }
+      @media (min-width: 961px) {
+        #app {
+          padding-left: 304px;
+        }
+        .md-sidenav.main-sidebar .md-sidenav-content {
+          top: 0;
+          pointer-events: auto;
+          transform: translate3d(0, 0, 0);
+          box-shadow: 0 1px 5px rgba(0,0,0,.2), 0 2px 2px rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.12);
+        }
+        .md-sidenav.main-sidebar .md-backdrop {
+          opacity: 0;
+          pointer-events: none;
+        }
+      }
+      .md-list-text-container .schedule-meta-info, .md-list-text-container .schedule-speech-text {
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        -webkit-text-overflow: ellipsis;
+        -o-text-overflow: ellipsis;
+      }
+      #speech, #schedules {
+        min-width: 320px;
+        max-width: 640px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+    :javascript
+      function scheduleSkeleton() {
+        return {id: -1, name: '', at: '', wday: [], speech_text: '', frequency: 60, once_only: false};
+      };
+      function speechSkeleton() {
+        return {speech_text: ''};
+      };
+
+      Vue.use(VueMaterial);
+
+      var App = new Vue({
+        el: '#app',
+        data: {
+          headerTitle: 'Shizushizu',
+          activePage: 'speech',
+          schedules: [],
+          speechHistories: [],
+          currentSchedule: scheduleSkeleton(),
+          currentSpeech: speechSkeleton(),
+        },
+        computed: {
+          /**
+           * currentScheduleが新規作成かを返す
+           */
+          currentScheduleIsNew: function () {
+            return this.currentSchedule.id == -1;
+          },
+
+          /**
+           * currentScheduleが編集されたかを返す
+           */
+          currentScheduleIsChange: function () {
+          },
+
+          /**
+           * バリデーションを返す
+           */
+          scheduleValidations: function () {
+            return {
+              at: !!this.currentSchedule.at.match(/^[0-2][0-9]:[0-5][0-9]$/),
+              name: !!this.currentSchedule.name.trim(),
+              speech_text: !!this.currentSchedule.speech_text.trim(),
+            };
+          },
+
+          speechValidations: function () {
+            return {
+              speech_text: !!this.currentSpeech.speech_text.trim(),
+            };
+          },
+
+          /**
+           * バリデーションを満たしているかを返す
+           */
+          scheduleIsValid: function () {
+            return _.every(this.scheduleValidations, function (result) {
+              return result;
+            });
+          },
+
+          speechIsValid: function () {
+            return _.every(this.speechValidations, function (result) {
+              return result;
+            });
+          },
+        },
+        created: function () {
+          var that = this;
+          axios
+            .get('/api/v1/speech/schedules')
+            .then(function (response) {
+              that.schedules = response.data;
+            })
+            .catch(function (error) {
+              console.log(error.response.data.reason);
+            });
+        },
+        methods: {
+          changePage: function (page) {
+            this.activePage = page;
+          },
+          toggleLeftSidenav: function () {
+            this.$refs.leftSidenav.open();
+          },
+          startSpeech: function () {
+            this.headerTitle = 'Speech';
+            this.activePage = 'speech';
+          },
+
+          speechNow: function () {
+            if (!this.speechIsValid) return;
+
+            var that = this;
+            axios
+              .post('/api/v1/speech', {
+                speech_text: this.currentSpeech.speech_text,
+              })
+              .then(function () {
+                that.speechHistories.push({speech_text: that.currentSpeech.speech_text, at: new Date()});
+                that.currentSpeech = speechSkeleton();
+              })
+              .catch(function (error) {
+                console.log(error.response.data.reason);
+              });
+          },
+
+          /**
+           * スケルトンを返す
+           */
+          getSkeleton: function () {
+            return scheduleSkeleton();
+          },
+
+          /**
+           * IDからスケジュールを返す
+           */
+          findById: function (id) {
+            return _.find(this.schedules, function(schedule) {
+              return schedule.id == id;
+            });
+          },
+
+          /**
+           * 渡されたスケジュールの編集を開始する
+           */
+          startEdit: function (schedule) {
+            this.currentSchedule = JSON.parse(JSON.stringify(schedule));
+            this.headerTitle = 'スケジュール' + (this.currentScheduleIsNew ? '作成' : '更新');
+            this.activePage = 'schedules';
+          },
+
+          /**
+           * スケジュールを新規作成する
+           */
+          create: function () {
+            if (!this.scheduleIsValid) return;
+
+            var target = JSON.parse(JSON.stringify(this.currentSchedule));
+            delete target.id;
+            var that = this;
+            axios
+              .post('/api/v1/speech/schedules', target)
+              .then(function (response) {
+                target.id = response.data.id;
+                that.schedules.push(target);
+                that.startEdit(scheduleSkeleton());
+              })
+              .catch(function (error) {
+                console.log(error.response.data.reason);
+              });
+          },
+
+          /**
+           * スケジュールを更新する
+           */
+          update: function () {
+            if (!this.scheduleIsValid) return;
+
+            var target = this.findById(this.currentSchedule.id);
+            var that = this;
+            axios
+              .put('/api/v1/speech/schedules/' + target.id, that.currentSchedule)
+              .then(function () {
+                target.name = that.currentSchedule.name;
+                target.at = that.currentSchedule.at;
+                target.speech_text = that.currentSchedule.speech_text;
+              })
+              .catch(function (error) {
+                console.log(error.response.data.reason);
+              });
+          },
+
+          /**
+           * スケジュールを削除する
+           */
+          del: function () {
+            var target = this.findById(this.currentSchedule.id);
+            var that = this;
+            axios
+              .delete('/api/v1/speech/schedules/' + target.id)
+              .then(function () {
+                that.schedules.splice(that.schedules.indexOf(target), 1);
+                that.startEdit(scheduleSkeleton());
+              })
+              .catch(function (error) {
+                console.log(error.response.data.reason);
+              });
+          },
+        },
+      });

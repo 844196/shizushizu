@@ -5,30 +5,28 @@
         "type": "object",
         "properties": {
             "id": {
-                "type": "integer",
-                "minimum": 1
+                "$ref": "contracts/definitions/api/v1/speech/schedules/id.json"
             },
             "name": {
-                "type": "string",
-                "minLength": 1
+                "$ref": "contracts/definitions/api/v1/speech/schedules/name.json"
             },
             "at": {
-                "type": "string",
-                "minLength": 1,
-                "pattern": "^[0-2][0-9]:[0-5][0-9]$"
+                "$ref": "contracts/definitions/api/v1/speech/schedules/at.json"
+            },
+            "wday": {
+                "$ref": "contracts/definitions/api/v1/speech/schedules/wday.json"
             },
             "frequency": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 60
+                "$ref": "contracts/definitions/api/v1/speech/schedules/frequency.json"
             },
             "speech_text": {
-                "type": "string",
-                "minLength": 1,
-                "pattern": "^[^ ]+"
+                "$ref": "contracts/definitions/api/v1/speech/speech_text.json"
+            },
+            "once_only": {
+                "$ref": "contracts/definitions/api/v1/speech/schedules/once_only.json"
             }
         },
-        "required": ["id", "name", "at", "frequency", "speech_text"],
+        "required": ["id", "name", "at", "wday", "frequency", "speech_text", "once_only"],
         "additionalProperties": false
     },
     "additionalItems": false

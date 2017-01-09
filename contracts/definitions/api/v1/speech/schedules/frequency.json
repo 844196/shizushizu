@@ -1,0 +1,7 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "description": "発話スケジュールの1分の内の実行間隔",
+    "type": "integer",
+    "minimum": 0,
+    "maximum": 60
+}

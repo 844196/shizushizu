@@ -28,8 +28,8 @@
                 %label.col-sm-2.control-label
                   時刻
                 .col-sm-10
-                  %input.form-control{:type => 'text', :'v-model' => 'currentSchedule.at'}
-                  %label.control-label{:'v-show' => '!validations.at'}
+                  %input.form-control{:type => 'text', :'v-model' => 'currentSchedule.at', :'@click' => 'openPicker'}
+                  %label.control-label.c-datepicker-btn{:'v-show' => '!validations.at'}
                     %code
                       HH:mm
                     形式で入力してください
@@ -40,6 +40,10 @@
                   %textarea.form-control{:'v-model' => 'currentSchedule.speech_text'}
                   %label.control-label{:'v-show' => '!validations.speech_text'}
                     未入力です
+              .form-group
+                .col-sm-offset-2.col-sm-10
+                  %input{:type => 'checkbox', :'v-model' => 'currentSchedule.once_only'}
+                    1回限り
             .panel-footer.text-right
               %button.btn.btn-danger{:type => 'button', :'v-if' => '!currentScheduleIsNew', :'@click' => 'del()'}
                 %i.fa.fa-trash.fa-fw
@@ -49,11 +53,16 @@
                 {{ currentScheduleIsNew ? '作成' : '更新' }}
 
 :javascript
+  function scheduleSkeleton() {
+    return {id: -1, name: '', at: '', day_of_weeks: [], speech_text: '', frequency:60, once_only: false};
+  };
+
   var vm = new Vue({
     el: '#app',
     data: {
       schedules: [],
-      currentSchedule: {id: -1, name: '', at: '', speech_text: ''},
+      currentSchedule: scheduleSkeleton(),
+      picker: new MaterialDatePicker(),
     },
     computed: {
       /**
@@ -74,7 +83,7 @@
        */
       validations: function () {
         return {
-          at: !!this.currentSchedule.at.match(/[0-2][0-9]:[0-5][0-9]/),
+          at: !!this.currentSchedule.at.match(/^[0-2][0-9]:[0-5][0-9]$/),
           name: !!this.currentSchedule.name.trim(),
           speech_text: !!this.currentSchedule.speech_text.trim(),
         };
@@ -101,11 +110,16 @@
         });
     },
     methods: {
+      openPicker: function () {
+        console.log('catc');
+        this.picker.open();
+      },
+
       /**
        * スケルトンを返す
        */
       getSkeleton: function () {
-        return {id: -1, name: '', at: '', speech_text: ''};
+        return {id: -1, name: '', at: '', speech_text: '', frequency:60, once_only: false};
       },
 
       /**
@@ -138,7 +152,7 @@
           .then(function (response) {
             target.id = response.data.id;
             that.schedules.push(target);
-            that.startEdit(that.getSkeleton());
+            that.startEdit(scheduleSkeleton());
           })
           .catch(function (error) {
             console.log(error.response.data.reason);
@@ -175,7 +189,7 @@
           .delete('/api/v1/speech/schedules/' + target.id)
           .then(function () {
             that.schedules.splice(that.schedules.indexOf(target), 1);
-            that.startEdit(that.getSkeleton());
+            that.startEdit(scheduleSkeleton());
           })
           .catch(function (error) {
             console.log(error.response.data.reason);

@@ -1,0 +1,6 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "description": "発話スケジュールのスケジュール名",
+    "type": "string",
+    "minLength": 1
+}

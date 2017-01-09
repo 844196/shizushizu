@@ -1,3 +1,3 @@
-require './app'
+require File.expand_path('../config/application', __FILE__)
 
-run App
+run Application

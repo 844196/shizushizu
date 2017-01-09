@@ -10,13 +10,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20161230172215) do
+ActiveRecord::Schema.define(version: 20170108171008) do
 
   create_table "speech_schedules", force: :cascade do |t|
-    t.string  "name",                     null: false
-    t.integer "frequency",   default: 60, null: false
-    t.string  "at",                       null: false
-    t.text    "speech_text",              null: false
+    t.string  "name",                                                             null: false
+    t.integer "frequency",   default: 60,                                         null: false
+    t.string  "at",                                                               null: false
+    t.text    "speech_text",                                                      null: false
+    t.boolean "once_only",   default: false,                                      null: false
+    t.text    "wday",        default: "---\n- 0\n- 1\n- 2\n- 3\n- 4\n- 5\n- 6\n", null: false
   end
 
 end
