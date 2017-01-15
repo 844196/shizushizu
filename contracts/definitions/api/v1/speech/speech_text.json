@@ -3,5 +3,5 @@
     "description": "発話内容",
     "type": "string",
     "minLength": 1,
-    "pattern": "^[^ ]+"
+    "pattern": "^[^#!$%&'*+-/=?^_`{}~|)(]+"
 }

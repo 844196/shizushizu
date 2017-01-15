@@ -25,6 +25,16 @@ module JsonApiModule
     end
   end
 
+  options '*' do
+    response.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,Content-Type'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+    halt 200
+  end
+
+  before do
+    response.headers['Access-Control-Allow-Origin'] = '*'
+  end
+
   before :method => [:post, :put] do
     begin
       request.body.rewind

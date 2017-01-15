@@ -3,9 +3,7 @@
     "type": "object",
     "properties": {
         "speech_text": {
-            "type": "string",
-            "minLength": 1,
-            "pattern": "^[^ ]+"
+            "$ref": "contracts/definitions/api/v1/speech/speech_text.json"
         }
     },
     "required": ["speech_text"],
